@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CsvView } from "./CsvView";
@@ -252,6 +253,11 @@ function Tree({ nodes, collapsed, onToggle, selected, onSelect, files }) {
                   {folder ? countUnder(files, node.path) : node.file?.bot}
                 </span>
               </button>
+              {node.path.startsWith("ideas/") && node.path.split("/").length === 2 ? (
+                <Link href={`/ideas/${node.name}`} className="report-link">
+                  Report
+                </Link>
+              ) : null}
             </div>
             {folder && !closed ? (
               <Tree
@@ -361,7 +367,7 @@ function Viewer({ file, onSelect }) {
               className={mode === "source" ? "btn primary" : "btn"}
               onClick={() => setMode("source")}
             >
-              Source
+              View raw
             </button>
           </>
         ) : null}
@@ -456,9 +462,14 @@ function IdeaBoard({ idea, files, onSelect, onUpload }) {
           <h2>{idea.split("/")[1]}</h2>
           <p className="meta-line">{inside.length} files in this idea</p>
         </div>
-        <button type="button" className="btn primary" onClick={() => onUpload(`${idea}/`)}>
-          Upload into this idea
-        </button>
+        <div className="top-actions">
+          <Link href={`/ideas/${idea.split("/")[1]}`} className="btn primary">
+            Open report
+          </Link>
+          <button type="button" className="btn" onClick={() => onUpload(`${idea}/`)}>
+            Upload into this idea
+          </button>
+        </div>
       </header>
       {idea.endsWith("/000-sample-desk") ? (
         <p className="banner">
@@ -565,11 +576,16 @@ function FolderList({ folder, files, onSelect }) {
       </header>
       <ul className="recent">
         {items.map((item) => (
-          <li key={item.path}>
+          <li key={item.path} className={folder === "ideas" ? "idea-row" : undefined}>
             <button type="button" onClick={() => onSelect(item.path)}>
               <span>{item.name}</span>
               <span>{item.file ? item.file.bot : `${item.count} files`}</span>
             </button>
+            {folder === "ideas" ? (
+              <Link href={`/ideas/${item.name}`} className="btn">
+                Report
+              </Link>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -598,7 +614,7 @@ function CopyButton({ text }) {
   );
 }
 
-function Overview({ catalog, files, onSelect, origin }) {
+function Overview({ catalog, files, onSelect, origin, indexSource = "" }) {
   const ideas = new Set(
     files
       .map((file) => file.path.match(/^ideas\/([^/]+)\//)?.[1])
@@ -615,9 +631,14 @@ function Overview({ catalog, files, onSelect, origin }) {
       <p className="kicker">Research data</p>
       <h2>Files from the validation bots</h2>
       <p className="lede">
-        Each bot posts a file with its name. The file lands in the same folders as the
-        research repo, and opens here as prose, a table, or JSON.
+        Each idea opens as a report. Markdown, CSV, and JSON files open formatted, with
+        the raw file still available.
       </p>
+      {indexSource ? (
+        <section className="panel index-panel">
+          <MarkdownView source={indexSource} fromPath="INDEX.md" />
+        </section>
+      ) : null}
       <dl className="facts">
         <div>
           <dt>This server</dt>
@@ -868,6 +889,7 @@ export default function Desk({
   initialCatalog,
   initialFile = "",
   origin = "http://localhost:3000",
+  indexSource = "",
 }) {
   const [catalog, setCatalog] = useState(initialCatalog);
   const [selected, setSelected] = useState(initialFile || null);
@@ -1042,7 +1064,13 @@ export default function Desk({
         </aside>
         <main className="main">
           {view === "home" ? (
-            <Overview catalog={catalog} files={files} onSelect={select} origin={origin} />
+            <Overview
+              catalog={catalog}
+              files={files}
+              onSelect={select}
+              origin={origin}
+              indexSource={indexSource}
+            />
           ) : null}
           {view === "file" && selectedFile ? (
             <Viewer file={selectedFile} onSelect={select} />

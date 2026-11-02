@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import Desk from "@/components/Desk";
 import { HttpError } from "@/lib/http";
-import { listCatalog } from "@/lib/vault";
+import { listCatalog, readUpload } from "@/lib/vault";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,21 @@ export default async function Page({ searchParams }) {
     setupMessage = err instanceof HttpError ? err.message : "The desk could not reach GitHub.";
   }
   if (!catalog) return <GitHubSetup message={setupMessage} />;
-  return <Desk initialCatalog={catalog} initialFile={initialFile} origin={origin} />;
+  let indexSource = "";
+  try {
+    const index = await readUpload("INDEX.md");
+    indexSource = index.buffer.toString("utf8");
+  } catch {
+    indexSource = "";
+  }
+  return (
+    <Desk
+      initialCatalog={catalog}
+      initialFile={initialFile}
+      origin={origin}
+      indexSource={indexSource}
+    />
+  );
 }
 
 function GitHubSetup({ message }) {
