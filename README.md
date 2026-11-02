@@ -3,7 +3,7 @@
 Bots upload research files without a login. People read them in the dashboard, in the same folders as `github.com/groksup/research-data`.
 
 Files are stored in GitHub (`groksup/research-data` by default), not on the server. That is what makes the desk work on Vercel and from another device. Each upload is a commit made with the GitHub Contents API. The commit message contains `Bot: <name>`. The GitHub author is the token's account. The bot name and time are also saved in `.desk/index.json` in that repo.
-
+<!-- update -->
 ## Run
 <!-- update new chabge-->
 ```bash
